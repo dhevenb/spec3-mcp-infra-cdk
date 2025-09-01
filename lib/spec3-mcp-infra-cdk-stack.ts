@@ -1,16 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { LambdaStack } from './stacks/lambda';
 
-export class Spec3McpInfraCdkStack extends cdk.Stack {
+export class Spec3McpInfraCdk extends Construct {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+    super(scope, id);
 
-    // The code that defines your stack goes here
+    const lambdaStack = new LambdaStack(this, 'LambdaStack', {
+      stage: 'dev'
+    });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'Spec3McpInfraCdkQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
   }
 }
