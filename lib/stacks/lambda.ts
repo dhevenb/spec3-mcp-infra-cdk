@@ -22,25 +22,25 @@ export class LambdaStack extends cdk.Stack {
       ],
     });
 
-    // Example Lambda function - you can customize this or add more
-    const exampleFunction = new lambda.Function(this, 'ExampleFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromInline(`
-        exports.handler = async (event) => {
-          console.log('Event:', JSON.stringify(event, null, 2));
-          return {
-            statusCode: 200,
-            body: JSON.stringify({
-              message: 'Hello from Lambda!',
-              timestamp: new Date().toISOString(),
-              environment: '${props.stage}'
-            })
-          };
-        };
-      `),
+    // Main MCP Lambda function
+    const lambdaFunction = new lambda.Function(this, 'PythonExampleFunction', {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: 'spec3_mcp_lambda.handlers.spec3_lambda.handler',
+      code: lambda.Code.fromAsset('/home/dhevb/workspaces/spec3-mcp-lambda', {
+        bundling: {
+          image: lambda.Runtime.PYTHON_3_11.bundlingImage,
+          command: [
+            '/bin/sh', '-c',
+            'pip install -r requirements.txt -t /asset-output && cp -r src/* /asset-output/'
+          ],
+        },
+      }),
       role: lambdaExecutionRole,
+      environment: {
+        STAGE: props.stage,
+      },
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
     });
-
   }
 }
