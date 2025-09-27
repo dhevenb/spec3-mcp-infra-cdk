@@ -1,0 +1,161 @@
+# Spec3 MCP Infrastructure CDK - Project Intelligence
+
+## CDK Architecture Patterns
+
+### Stack Organization
+- **Main Stack**: `Spec3McpInfraCdk` - Entry point construct
+- **Lambda Stack**: `LambdaStack` - Dedicated stack for Lambda resources
+- **Stage-based**: Environment-specific deployments (dev/staging/prod)
+
+### CDK Construct Patterns
+```typescript
+export interface LambdaStackProps extends cdk.StackProps {
+  stage: string; // Environment identifier
+}
+
+export class LambdaStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: LambdaStackProps) {
+    // Infrastructure implementation
+  }
+}
+```
+
+### AWS Resource Patterns
+- **Lambda Function**: Python 3.11 runtime with custom bundling
+- **IAM Roles**: Minimal permissions principle
+- **Environment Variables**: Stage-based configuration
+- **Asset Bundling**: Docker-based Python dependency management
+
+## Infrastructure Development Workflow
+
+### CDK Development Process
+1. **Design**: Plan AWS resources and their relationships
+2. **Implement**: Create CDK constructs and stacks
+3. **Test**: Use `cdk synth` to validate CloudFormation output
+4. **Deploy**: Use `npx cdk deploy` for infrastructure deployment
+5. **Verify**: Check AWS Console and CloudWatch logs
+
+### Key Commands
+- **Build**: `npm run build` - Compile TypeScript
+- **Watch**: `npm run watch` - Continuous compilation
+- **Test**: `npm test` - Run Jest tests
+- **Synth**: `npx cdk synth` - Generate CloudFormation
+- **Deploy**: `npx cdk deploy` - Deploy infrastructure
+- **Diff**: `npx cdk diff` - Compare with deployed state
+
+## Infrastructure Configuration
+
+### Lambda Function Configuration
+```typescript
+const lambdaFunction = new lambda.Function(this, 'PythonExampleFunction', {
+  runtime: lambda.Runtime.PYTHON_3_11,
+  handler: 'spec3_mcp_lambda.handlers.spec3_lambda.handler',
+  code: lambda.Code.fromAsset('/home/dhevb/workspaces/spec3-mcp-lambda', {
+    bundling: {
+      image: lambda.Runtime.PYTHON_3_11.bundlingImage,
+      command: [
+        '/bin/sh', '-c',
+        'pip install -r requirements.txt -t /asset-output && cp -r src/* /asset-output/'
+      ],
+    },
+  }),
+  role: lambdaExecutionRole,
+  environment: { STAGE: props.stage },
+  timeout: cdk.Duration.seconds(30),
+  memorySize: 256,
+});
+```
+
+### Asset Bundling Process
+- **Source**: Hard-coded path to Lambda workspace
+- **Dependencies**: pip install from requirements.txt
+- **Code**: Copy src/ directory to output
+- **Image**: Python 3.11 bundling image
+
+## Infrastructure Challenges and Solutions
+
+### Path Management
+- **Problem**: Hard-coded absolute paths in CDK
+- **Current**: `/home/dhevb/workspaces/spec3-mcp-lambda`
+- **Solution**: Environment variables or relative path resolution
+- **Impact**: Deployment flexibility across environments
+
+### Resource Naming
+- **Pattern**: Construct ID + Stage suffix
+- **Example**: `PythonExampleFunction` (needs renaming)
+- **Best Practice**: Descriptive, environment-aware naming
+
+### Dependency Management
+- **CDK Version**: 2.205.0 (stable L2 constructs)
+- **Node.js**: TypeScript compilation
+- **AWS SDK**: Included in CDK library
+
+## Infrastructure Evolution
+
+### Current State
+- Basic Lambda function deployment
+- Minimal IAM permissions
+- Single environment (dev)
+- Docker-based bundling
+
+### Planned Enhancements
+- Environment-specific configurations
+- API Gateway integration
+- CloudWatch monitoring
+- VPC configuration
+- Multiple Lambda functions
+- Environment-specific resource naming
+
+## Deployment Patterns
+
+### Environment Management
+- **Stage Parameter**: Passed to LambdaStack
+- **Environment Variables**: STAGE variable in Lambda
+- **Resource Tagging**: Environment-based tagging strategy
+
+### Security Considerations
+- **IAM Roles**: Minimal permissions
+- **Network**: Default Lambda networking (no VPC)
+- **Secrets**: Environment variables (consider AWS Secrets Manager)
+
+## CDK Best Practices
+
+### Code Organization
+- Separate stacks for different resource types
+- Interface-based props for type safety
+- Clear construct naming conventions
+- Comprehensive JSDoc comments
+
+### Testing Strategy
+- Unit tests for CDK constructs
+- Integration tests with `cdk synth`
+- Deployment validation tests
+- Resource verification tests
+
+### Error Handling
+- CDK context validation
+- Resource dependency management
+- Deployment rollback procedures
+- CloudFormation drift detection
+
+## Project-Specific Infrastructure Intelligence
+
+### Lambda Integration
+- **Handler Path**: Must match Python package structure
+- **Runtime**: Python 3.11 for FastMCP compatibility
+- **Memory**: 256MB (adjustable based on tool complexity)
+- **Timeout**: 30 seconds (adjustable for long-running tools)
+
+### MCP Protocol Requirements
+- **HTTP Interface**: No API Gateway currently (direct Lambda invocation)
+- **CORS**: Handled in Lambda code
+- **JSON**: Request/response format
+- **Error Handling**: Lambda-level error responses
+
+### Scalability Considerations
+- **Concurrent Executions**: AWS account limits
+- **Cold Starts**: Python 3.11 optimization
+- **Memory Scaling**: Based on tool requirements
+- **Regional Deployment**: Single region currently
+
+This file captures CDK-specific patterns and infrastructure intelligence for effective infrastructure development.
