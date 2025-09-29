@@ -23,7 +23,8 @@ export class LambdaStack extends cdk.Stack {
     });
 
     // Main MCP Lambda function
-    const lambdaFunction = new lambda.Function(this, 'PythonExampleFunction', {
+    const lambdaFunction = new lambda.Function(this, 'Spec3McpLambda', {
+      functionName: `Spec3McpLambda-${props.stage}`,
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: 'spec3_mcp_lambda.handlers.spec3_lambda.handler',
       code: lambda.Code.fromAsset('/home/dhevb/workspaces/spec3-mcp-lambda', {
@@ -42,5 +43,18 @@ export class LambdaStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
     });
+
+    // Enable Function URL and Streaming
+    lambdaFunction.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowCredentials: false,
+        allowedOrigins: ['*'],
+        allowedHeaders: ['*'],
+        allowedMethods: [lambda.HttpMethod.ALL],
+        maxAge: cdk.Duration.days(1)
+      },
+      invokeMode: lambda.InvokeMode.RESPONSE_STREAM,
+    })
   }
 }
